@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Register Page</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .register-container {
+            background-color: #222;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(255, 0, 0, 0.5);
+            width: 300px;
+        }
+        .register-container h1 {
+            text-align: center;
+            color: #ff0000;
+        }
+        .register-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background-color: #333;
+            color: white;
+        }
+        .register-container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .register-container button:hover {
+            background-color: #cc0000;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .login-link a {
+            color: #ff0000;
+            text-decoration: none;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="register-container">
+    <h1>Register</h1>
+    <form th:action="@{/register}" method="post">
+        <label>
+            <input type="text" name="username" placeholder="Username" required>
+        </label>
+        <label>
+            <input type="password" name="password" placeholder="Password" required>
+        </label>
+        <label>
+            <input type="password" name="confirmPassword" placeholder="Confirm Password" required>
+        </label>
+        <button type="submit">Register</button>
+    </form>
+    <div class="login-link">
+        <p>Already have an account? <a th:href="@{/login}">Login here</a></p>
+    </div>
+</div>
+</body>
+</html>

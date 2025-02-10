@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Professional CV</title>
+    <style>
+        /* Flying Saucer Uyumlu Renkli Tasarım */
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.25;
+            margin: 0;
+            padding: 15px;
+            color: #2d3436;
+            background: #f8f9fa;
+        }
+
+        .cv-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            width: 100%;
+            margin-bottom: 15px;
+            overflow: hidden;
+            border-bottom: 3px solid #0984e3;
+            padding-bottom: 10px;
+        }
+
+        .photo-container {
+            width: 80px;
+            height: 100px;
+            float: left;
+            margin-right: 15px;
+            border: 2px solid #dfe6e9;
+        }
+
+        .photo-container img {
+            width: 100%;
+            height: 100%;
+        }
+
+        .name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2d3436;
+            margin-bottom: 3px;
+        }
+
+        .position {
+            font-size: 12px;
+            color: #0984e3;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .contact-info div {
+            margin-bottom: 2px;
+            color: #636e72;
+        }
+
+        .contact-info a {
+            color: #0984e3;
+            text-decoration: none;
+        }
+
+        .section {
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+            padding: 8px;
+            background: #fdfdfd;
+            border-left: 3px solid #74b9ff;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #0984e3;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .two-columns {
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .column {
+            width: 48%;
+            float: left;
+        }
+
+        .column:last-child {
+            float: right;
+        }
+
+        .content-item {
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px dotted #dfe6e9;
+        }
+
+        .skill-list {
+            padding-left: 15px;
+            list-style: none;
+        }
+
+        .skill-list li {
+            margin-bottom: 3px;
+            padding: 3px 6px;
+            background: #e3f2fd;
+            display: inline-block;
+            margin-right: 4px;
+            border-radius: 2px;
+            color: #1976d2;
+        }
+
+        .company {
+            color: #0984e3;
+            font-weight: 600;
+        }
+
+        .date {
+            color: #636e72;
+            font-size: 9px;
+        }
+    </style>
+</head>
+<body>
+<div class="cv-container" th:object="${cv}">
+    <!-- Header Section -->
+    <div class="header">
+        <div class="photo-container">
+            <img th:if="${cv.photo != null}" th:src="'data:image/jpeg;base64,' + *{photo}" alt="Profile Photo"/>
+        </div>
+        <div class="header-content">
+            <div class="name" th:text="*{fullName}"></div>
+            <div class="position" th:text="*{position}"></div>
+            <div class="contact-info">
+                <div><span th:text="*{location}"></span></div>
+                <div><span th:text="*{phone}"></span></div>
+                <div>
+                    <span style="color: #0984e3; font-weight:600;">GitHub: </span>
+                    <span th:text="*{github}"></span>
+                </div>
+                <div>
+                    <span style="color: #0984e3; font-weight:600;">LinkedIn: </span>
+                    <span th:text="*{linkedin}"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About & Skills -->
+    <div class="two-columns">
+        <div class="column">
+            <div class="section">
+                <div class="section-title">Hakkımda</div>
+                <div th:text="*{about}" style="color: #636e72;"></div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="section">
+                <div class="section-title">Yetenekler</div>
+                <div style="color: #636e72;" th:text="*{skill}"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects -->
+    <div class="section">
+        <div class="section-title">Projeler</div>
+        <div th:each="project : *{projects}" class="content-item">
+            <div class="company" th:text="${project.name}"></div>
+            <div style="color: #2d3436;" th:text="${project.description}"></div>
+            <div style="color: #2d3436;" th:text="${project.link}"></div>
+
+        </div>
+    </div>
+
+    <!-- Education & Experience -->
+    <div class="two-columns">
+        <div class="column">
+            <div class="section">
+                <div class="section-title">Eğitim</div>
+                <div th:each="education : *{educations}" class="content-item">
+                    <div class="company" th:text="${education.university}"></div>
+                    <div th:text="${education.department}" style="color: #2d3436;"></div>
+                    <div class="date" th:text="${education.startDate} + ' - ' + ${education.endDate}"></div>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="section">
+                <div class="section-title">Deneyim</div>
+                <div th:each="experience : *{workExperiences}" class="content-item">
+                    <div class="company" th:text="${experience.company}"></div>
+                    <div th:text="${experience.position}" style="color: #2d3436;"></div>
+                    <div class="date" th:text="${experience.year}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- References -->
+    <div class="section">
+        <div class="section-title">Referanslar</div>
+        <div class="two-columns">
+            <div th:each="reference : *{references}" class="content-item">
+                <div class="company" th:text="${reference.fullName}"></div>
+                <div th:text="${reference.position} + ', ' + ${reference.company}" style="color: #2d3436;"></div>
+                <div class="date" th:text="${reference.phone}"></div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <style>
+        #contentArea h2 {
+            font-weight: bold;
+        }
+
+        #contentArea button {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        #contentArea .btn-success {
+            background-color: #28a745;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #contentArea .btn-success:hover {
+            background-color: #218838;
+        }
+
+        /* Sol menüyü sabitle */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            overflow-y: auto;
+        }
+
+        /* İçerik alanını sola kaydır */
+        .content {
+            margin-left: 250px;
+            padding: 20px;
+            width: calc(100% - 250px);
+        }
+    </style>
+</head>
+<body>
+<div class="d-flex">
+    <!-- Sidebar -->
+    <div class="sidebar d-flex flex-column flex-shrink-0 bg-dark text-white p-3">
+        <button id="profileButton" class="btn btn-secondary w-100 mb-2" onclick="showProfile()">Your Profile</button>
+        <button id="myCvButton" class="btn btn-secondary w-100 mb-2" onclick="showCv()">My Cv's</button>
+        <hr/>
+        <div class="text-center mt-auto">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn btn-danger w-100">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div id="contentArea" class="content flex-grow-1 bg-light">
+        <h2>Your Profile</h2>
+        <p>Bu alanda profil bilgilerinizi görüntüleyebilirsiniz.</p>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    // Profil Görüntüleme
+    function showProfile() {
+        document.getElementById("contentArea").innerHTML = `
+          <h2>Profilim</h2>
+          <p>Ad: Ahmet Yılmaz</p>
+          <p>Email: ahmet.yilmaz@example.com</p>
+          <p>Telefon: +90 555 123 4567</p>
+          <p>Konum: İstanbul, Türkiye</p>
+          <p>LinkedIn: <a href="#">linkedin.com/in/ahmetyilmaz</a></p>
+          <p>GitHub: <a href="#">github.com/ahmetyilmaz</a></p>
+      `;
+    }
+
+    // CV Sayfasını Gösterme
+    function showCv() {
+        document.getElementById("contentArea").innerHTML = `
+        <div class="d-flex justify-content-center mb-3">
+            <button id="createCvButton" class="btn btn-success" onclick="showCvForm()">Yeni CV Oluştur</button>
+        </div>
+        <div id="cvListContainer">
+            <h2>CV'lerim</h2>
+            <p>Bu alanda daha önce oluşturduğunuz CV'leri görebilirsiniz.</p>
+            <div id="cvCards" class="row"></div>
+        </div>
+        <div id="cvFormContainer" class="mt-4"></div>
+      `;
+        // CV listelerini sunucudan çek
+        loadCvList();
+    }
+
+    // Yeni eklenen fonksiyon:
+    function deleteCv(cvId) {
+        if(confirm("Bu CV'yi silmek istediğinize emin misiniz?")) {
+            fetch(`deletecv/${cvId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            })
+                .then(response => {
+                    if(response.ok) {
+                        alert("CV başarıyla silindi!");
+                        loadCvList();
+                    }
+                })
+                .catch(error => console.error("Hata:", error));
+        }
+    }
+    // CV Listesini Sunucudan Çek ve Kartlarla Listele (Bootstrap kart yapısı)
+    function loadCvList() {
+        fetch("getcvlist", { // Parametresiz
+            method: 'GET',
+            credentials: 'include' // Cookie'leri gönder
+        })
+            .then(response => response.json())
+            .then(data => {
+                const cvCardsContainer = document.getElementById("cvCards");
+                cvCardsContainer.innerHTML = "";
+                if (data.length === 0) {
+                    cvCardsContainer.innerHTML = `<p class="text-muted">Henüz oluşturulmuş bir CV bulunmuyor.</p>`;
+                } else {
+                    data.forEach(cv => {
+                        const col = document.createElement("div");
+                        col.className = "col-md-4";
+                        // Değiştirilecek kısım:
+                        col.innerHTML = `
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">${cv.fullName || "Ad Belirtilmemiş"}</h5>
+            <p class="card-text">${cv.position || "Pozisyon Bilgisi Yok"}</p>
+            <div class="d-flex justify-content-between">
+                <button class="btn btn-primary btn-sm" onclick="downloadCv(${cv.id})">İndir</button>
+                <button class="btn btn-secondary btn-sm" onclick="editCv(${cv.id})">Düzenle</button>
+                <!-- Sil butonu eklendi -->
+                <button class="btn btn-danger btn-sm" onclick="deleteCv(${cv.id})">Sil</button>
+            </div>
+        </div>
+    </div>`;
+                        cvCardsContainer.appendChild(col);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("CV listesi yüklenirken hata oluştu:", error);
+                document.getElementById("cvListContainer").innerHTML += `<p class="text-danger">CV listesi yüklenirken hata oluştu.</p>`;
+            });
+    }
+
+
+    // CV İndirme İşlemi
+    function downloadCv(cvId) {
+        // İndirilecek dosya için endpoint'e yönlendirme (alternatif: blob kullanarak indirme işlemi de yapılabilir)
+        window.location.href = `downloadcv/${cvId}`;
+
+    }
+
+    // Yeni CV Oluşturma Formu
+    function showCvForm() {
+        // "CV'lerim" başlığını ve butonunu gizle
+        document.getElementById("cvListContainer").style.display = "none";
+        document.getElementById("createCvButton").style.display = "none";
+
+        // Formu göster
+        document.getElementById("cvFormContainer").innerHTML = `
+        <h3>CV Bilgilerini Girin</h3>
+        <form id="cvForm">
+           <div class="mb-3">
+        <label class="form-label">Photo</label>
+        <input type="file" class="form-control" id="photo" accept="image/*">
+    </div>
+            <div class="mb-3">
+                <label class="form-label">Ad Soyad</label>
+                <input type="text" class="form-control" id="fullName" placeholder="Adınızı girin">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Pozisyon</label>
+                <input type="text" class="form-control" id="position" placeholder="Pozisyon girin">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Telefon</label>
+                <input type="text" class="form-control" id="phone" placeholder="Telefon numaranızı girin">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Konum</label>
+                <input type="text" class="form-control" id="location" placeholder="Şehir girin">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">GitHub</label>
+                <input type="text" class="form-control" id="github" placeholder="GitHub URL">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">LinkedIn</label>
+                <input type="text" class="form-control" id="linkedin" placeholder="LinkedIn URL">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Hakkımda</label>
+                <textarea class="form-control" id="about" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Yetenekler</label>
+                <textarea class="form-control" id="skill" rows="3"></textarea>
+            </div>
+
+            <!-- Education -->
+            <div class="mb-3">
+                <label class="form-label">Eğitim Bilgileri</label>
+                <div id="educationContainer">
+                    <div class="education-item mb-3">
+                        <input type="text" class="form-control mb-2" placeholder="Üniversite Adı">
+                        <input type="text" class="form-control mb-2" placeholder="Bölüm">
+                        <input type="text" class="form-control mb-2" placeholder="Başlangıç Tarihi (YYYY-MM-DD)">
+                        <input type="text" class="form-control mb-2" placeholder="Bitiş Tarihi (YYYY-MM-DD)">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeEducationItem(this)">Sil</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="addEducationItem()">Eğitim Ekle</button>
+            </div>
+
+            <!-- Projects -->
+            <div class="mb-3">
+                <label class="form-label">Projeler</label>
+                <div id="projectContainer">
+                    <div class="project-item mb-3">
+                        <input type="text" class="form-control mb-2" placeholder="Proje Adı">
+                        <textarea class="form-control mb-2" placeholder="Proje Açıklaması"></textarea>
+                        <input type="text" class="form-control mb-2" placeholder="Proje Linki">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeProjectItem(this)">Sil</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="addProjectItem()">Proje Ekle</button>
+            </div>
+
+            <!-- Work Experiences -->
+            <div class="mb-3">
+                <label class="form-label">İş Deneyimleri</label>
+                <div id="workExperienceContainer">
+                    <div class="work-experience-item mb-3">
+                        <input type="text" class="form-control mb-2" placeholder="Pozisyon">
+                        <input type="text" class="form-control mb-2" placeholder="Yıl">
+                        <input type="text" class="form-control mb-2" placeholder="Şirket">
+                        <textarea class="form-control mb-2" placeholder="Açıklama"></textarea>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeWorkExperienceItem(this)">Sil</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="addWorkExperienceItem()">İş Deneyimi Ekle</button>
+            </div>
+
+            <!-- References -->
+            <div class="mb-3">
+                <label class="form-label">Referanslar</label>
+                <div id="referenceContainer">
+                    <div class="reference-item mb-3">
+                        <input type="text" class="form-control mb-2" placeholder="Referans Adı">
+                        <input type="text" class="form-control mb-2" placeholder="Pozisyon">
+                        <input type="text" class="form-control mb-2" placeholder="Şirket">
+                        <input type="text" class="form-control mb-2" placeholder="Telefon">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeReferenceItem(this)">Sil</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="addReferenceItem()">Referans Ekle</button>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-danger" onclick="cancelCvForm()">İptal</button>
+                <button type="submit" class="btn btn-primary">Kaydet</button>
+            </div>
+        </form>
+      `;
+
+        // Form submit olayını dinle (CV oluşturma)
+        document.getElementById("cvForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            // Fotoğrafı base64'e çevir
+            const photoFile = document.getElementById('photo').files[0];
+            let photoBase64 = null;
+            if(photoFile) {
+                photoBase64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+                    reader.readAsDataURL(photoFile);
+                });
+            }
+
+            const cvData = {
+                fullName: document.getElementById("fullName").value,
+                position: document.getElementById("position").value,
+                phone: document.getElementById("phone").value,
+                location: document.getElementById("location").value,
+                github: document.getElementById("github").value,
+                linkedin: document.getElementById("linkedin").value,
+                about: document.getElementById("about").value,
+                skill: document.getElementById("skill").value,
+                photo: photoBase64, // Base64 ekleniyor
+                educations: collectEducationData(),
+                projects: collectProjectData(),
+                workExperiences: collectWorkExperienceData(),
+                references: collectReferenceData()
+            };
+
+            fetch("createcv", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(cvData)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert("CV başarıyla oluşturuldu!");
+                        cancelCvForm();
+                        showCv(); // Listeyi güncellemek için sayfayı yeniler
+                    } else {
+                        alert("CV oluşturulurken bir hata oluştu.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Hata:", error);
+                    alert("CV oluşturulurken bir hata oluştu.");
+                });
+        });
+    }
+
+    // CV Düzenleme İşlemi (Yeni formu, verilerle dolduruyor)
+    function editCv(cvId) {
+        // CV verilerini sunucudan çekiyoruz
+        fetch(`/getcv/${cvId}`)
+            .then(response => response.json())
+            .then(cvData => {
+                // CV listesi bölümünü gizleyin
+                document.getElementById("cvListContainer").style.display = "none";
+                document.getElementById("createCvButton").style.display = "none";
+
+                // Düzenleme formunu gösterin (oluşturduğunuz form yapısına benzer)
+                document.getElementById("cvFormContainer").innerHTML = `
+            <h3>CV Düzenle</h3>
+            <form id="cvFormEdit">
+                <div class="mb-3">
+        <label class="form-label">Photo</label>
+        <input type="file" class="form-control" id="editPhoto" accept="image/*">
+        <!-- Mevcut fotoğrafı göster -->
+        <div class="mt-2">
+            <img id="currentPhoto" src="" alt="Mevcut Fotoğraf" style="max-width: 200px; display: none;">
+        </div>
+    </div>
+                <div class="mb-3">
+                    <label class="form-label">Ad Soyad</label>
+                    <input type="text" class="form-control" id="fullName" placeholder="Adınızı girin" value="${cvData.fullName || ''}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Pozisyon</label>
+                    <input type="text" class="form-control" id="position" placeholder="Pozisyon girin" value="${cvData.position || ''}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Telefon</label>
+                    <input type="text" class="form-control" id="phone" placeholder="Telefon numaranızı girin" value="${cvData.phone || ''}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Konum</label>
+                    <input type="text" class="form-control" id="location" placeholder="Şehir girin" value="${cvData.location || ''}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">GitHub</label>
+                    <input type="text" class="form-control" id="github" placeholder="GitHub URL" value="${cvData.github || ''}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">LinkedIn</label>
+                    <input type="text" class="form-control" id="linkedin" placeholder="LinkedIn URL" value="${cvData.linkedin || ''}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Hakkımda</label>
+                    <textarea class="form-control" id="about" rows="3">${cvData.about || ''}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Yetenekler</label>
+                    <textarea class="form-control" id="skill" rows="3">${cvData.skill || ''}</textarea>
+                </div>
+                <!-- Eğitim, Projeler, İş Deneyimleri ve Referanslar bölümlerini, yeni eklenen verilerle doldurmanız gerekir.
+                     Aşağıdaki örnekte, boş bir yapı gösterilmektedir. -->
+                <div class="mb-3">
+                    <label class="form-label">Eğitim Bilgileri</label>
+                    <div id="educationContainer">
+                        ${(cvData.educations || []).map(edu => `
+                          <div class="education-item mb-3">
+                              <input type="text" class="form-control mb-2" placeholder="Üniversite Adı" value="${edu.university}">
+                              <input type="text" class="form-control mb-2" placeholder="Bölüm" value="${edu.department}">
+                              <input type="text" class="form-control mb-2" placeholder="Başlangıç Tarihi (YYYY-MM-DD)" value="${edu.startDate}">
+                              <input type="text" class="form-control mb-2" placeholder="Bitiş Tarihi (YYYY-MM-DD)" value="${edu.endDate}">
+                              <button type="button" class="btn btn-danger btn-sm" onclick="removeEducationItem(this)">Sil</button>
+                          </div>
+                        `).join('') || ''}
+                    </div>
+
+
+
+  <!-- Projeler -->
+    <div class="mb-3">
+        <label class="form-label">Projeler</label>
+        <div id="projectContainer">
+            ${(cvData.projects || []).map(proj => `
+                <div class="project-item mb-3">
+                    <input type="text" class="form-control mb-2" placeholder="Proje Adı" value="${proj.name}">
+                    <textarea class="form-control mb-2" placeholder="Proje Açıklaması">${proj.description}</textarea>
+                    <input type="text" class="form-control mb-2" placeholder="Proje Linki" value="${proj.link}">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeProjectItem(this)">Sil</button>
+                </div>
+            `).join('')}
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addProjectItem()">Proje Ekle</button>
+    </div>
+
+    <!-- İş Deneyimleri -->
+    <div class="mb-3">
+        <label class="form-label">İş Deneyimleri</label>
+        <div id="workExperienceContainer">
+            ${(cvData.workExperiences || []).map(work => `
+                <div class="work-experience-item mb-3">
+                    <input type="text" class="form-control mb-2" placeholder="Pozisyon" value="${work.position}">
+                    <input type="text" class="form-control mb-2" placeholder="Yıl" value="${work.year}">
+                    <input type="text" class="form-control mb-2" placeholder="Şirket" value="${work.company}">
+                    <textarea class="form-control mb-2" placeholder="Açıklama">${work.description}</textarea>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeWorkExperienceItem(this)">Sil</button>
+                </div>
+            `).join('')}
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addWorkExperienceItem()">İş Deneyimi Ekle</button>
+    </div>
+
+    <!-- Referanslar -->
+    <div class="mb-3">
+        <label class="form-label">Referanslar</label>
+        <div id="referenceContainer">
+            ${(cvData.references || []).map(ref => `
+                <div class="reference-item mb-3">
+                    <input type="text" class="form-control mb-2" placeholder="Referans Adı" value="${ref.fullName}">
+                    <input type="text" class="form-control mb-2" placeholder="Pozisyon" value="${ref.position}">
+                    <input type="text" class="form-control mb-2" placeholder="Şirket" value="${ref.company}">
+                    <input type="text" class="form-control mb-2" placeholder="Telefon" value="${ref.phone}">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeReferenceItem(this)">Sil</button>
+                </div>
+            `).join('')}
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addReferenceItem()">Referans Ekle</button>
+    </div>
+
+
+
+
+                    <button type="button" class="btn btn-secondary" onclick="addEducationItem()">Eğitim Ekle</button>
+                </div>
+                <!-- Benzer şekilde, projeler, iş deneyimleri ve referanslar için de alan ekleyin -->
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-danger" onclick="cancelCvForm()">İptal</button>
+                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                </div>
+            </form>
+          `;
+
+                // Düzenleme form submit işlemi
+                document.getElementById("cvFormEdit").addEventListener("submit", function (event) {
+                    event.preventDefault();
+
+                    const updatedCvData = {
+                        id: cvId,
+                        fullName: document.getElementById("fullName").value,
+                        position: document.getElementById("position").value,
+                        phone: document.getElementById("phone").value,
+                        location: document.getElementById("location").value,
+                        github: document.getElementById("github").value,
+                        linkedin: document.getElementById("linkedin").value,
+                        about: document.getElementById("about").value,
+                        skill: document.getElementById("skill").value,
+                        // Eğitim, projeler, iş deneyimleri ve referanslar verilerini de ekleyin
+                        educations: collectEducationData(),
+                        projects: collectProjectData(),
+                        workExperiences: collectWorkExperienceData(),
+                        references: collectReferenceData()
+                    };
+
+                    fetch("updatecv", {
+                        method: "PUT",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(updatedCvData)
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                alert("CV başarıyla güncellendi!");
+                                cancelCvForm();
+                                showCv();
+                            } else {
+                                alert("CV güncellenirken bir hata oluştu.");
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Hata:", error);
+                            alert("CV güncellenirken bir hata oluştu.");
+                        });
+                });
+            })
+            .catch(error => {
+                console.error("CV bilgileri yüklenirken hata:", error);
+                alert("CV bilgileri yüklenirken hata oluştu.");
+            });
+    }
+
+    // Form iptal işlemi: Formu temizler ve CV listesi tekrar görünür hale gelir
+    function cancelCvForm() {
+        document.getElementById("cvFormContainer").innerHTML = "";
+        document.getElementById("cvListContainer").style.display = "block";
+        document.getElementById("createCvButton").style.display = "block";
+    }
+
+    // Eğitim verilerini toplama fonksiyonu
+    function collectEducationData() {
+        const educationItems = document.querySelectorAll(".education-item");
+        return Array.from(educationItems).map(item => ({
+            university: item.querySelector("input[placeholder='Üniversite Adı']").value,
+            department: item.querySelector("input[placeholder='Bölüm']").value,
+            startDate: item.querySelector("input[placeholder='Başlangıç Tarihi (YYYY-MM-DD)']").value,
+            endDate: item.querySelector("input[placeholder='Bitiş Tarihi (YYYY-MM-DD)']").value
+        }));
+    }
+
+    // Proje veri toplama:
+    function collectProjectData() {
+        const projectItems = document.querySelectorAll(".project-item");
+        return Array.from(projectItems).map(item => ({
+            name: item.querySelector("input[placeholder='Proje Adı']").value,
+            description: item.querySelector("textarea[placeholder='Proje Açıklaması']").value,
+            link: item.querySelector("input[placeholder='Proje Linki']").value
+        }));
+    }
+
+    // İş deneyimi veri toplama:
+    function collectWorkExperienceData() {
+        const workItems = document.querySelectorAll(".work-experience-item");
+        return Array.from(workItems).map(item => ({
+            position: item.querySelector("input[placeholder='Pozisyon']").value,
+            year: item.querySelector("input[placeholder='Yıl']").value,
+            company: item.querySelector("input[placeholder='Şirket']").value,
+            description: item.querySelector("textarea[placeholder='Açıklama']").value
+        }));
+    }
+
+    // Referans veri toplama:
+    function collectReferenceData() {
+        const referenceItems = document.querySelectorAll(".reference-item");
+        return Array.from(referenceItems).map(item => ({
+            fullName: item.querySelector("input[placeholder='Referans Adı']").value,
+            position: item.querySelector("input[placeholder='Pozisyon']").value,
+            company: item.querySelector("input[placeholder='Şirket']").value,
+            phone: item.querySelector("input[placeholder='Telefon']").value
+        }));
+    }
+
+    // Dinamik olarak Eğitim alanı ekleme
+    function addEducationItem() {
+        const container = document.getElementById("educationContainer");
+        const newItem = document.createElement("div");
+        newItem.className = "education-item mb-3";
+        newItem.innerHTML = `
+          <input type="text" class="form-control mb-2" placeholder="Üniversite Adı">
+          <input type="text" class="form-control mb-2" placeholder="Bölüm">
+          <input type="text" class="form-control mb-2" placeholder="Başlangıç Tarihi (YYYY-MM-DD)">
+          <input type="text" class="form-control mb-2" placeholder="Bitiş Tarihi (YYYY-MM-DD)">
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeEducationItem(this)">Sil</button>
+      `;
+        container.appendChild(newItem);
+    }
+
+    // Dinamik olarak Proje alanı ekleme
+    function addProjectItem() {
+        const container = document.getElementById("projectContainer");
+        const newItem = document.createElement("div");
+        newItem.className = "project-item mb-3";
+        newItem.innerHTML = `
+          <input type="text" class="form-control mb-2" placeholder="Proje Adı">
+          <textarea class="form-control mb-2" placeholder="Proje Açıklaması"></textarea>
+          <input type="text" class="form-control mb-2" placeholder="Proje Linki">
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeProjectItem(this)">Sil</button>
+      `;
+        container.appendChild(newItem);
+    }
+
+    // Dinamik olarak İş Deneyimi alanı ekleme
+    function addWorkExperienceItem() {
+        const container = document.getElementById("workExperienceContainer");
+        const newItem = document.createElement("div");
+        newItem.className = "work-experience-item mb-3";
+        newItem.innerHTML = `
+          <input type="text" class="form-control mb-2" placeholder="Pozisyon">
+          <input type="text" class="form-control mb-2" placeholder="Yıl">
+          <input type="text" class="form-control mb-2" placeholder="Şirket">
+          <textarea class="form-control mb-2" placeholder="Açıklama"></textarea>
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeWorkExperienceItem(this)">Sil</button>
+      `;
+        container.appendChild(newItem);
+    }
+
+    // Dinamik olarak Referans alanı ekleme
+    function addReferenceItem() {
+        const container = document.getElementById("referenceContainer");
+        const newItem = document.createElement("div");
+        newItem.className = "reference-item mb-3";
+        newItem.innerHTML = `
+          <input type="text" class="form-control mb-2" placeholder="Referans Adı">
+          <input type="text" class="form-control mb-2" placeholder="Pozisyon">
+          <input type="text" class="form-control mb-2" placeholder="Şirket">
+          <input type="text" class="form-control mb-2" placeholder="Telefon">
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeReferenceItem(this)">Sil</button>
+      `;
+        container.appendChild(newItem);
+    }
+
+    // Dinamik alan silme işlemleri
+    function removeEducationItem(button) {
+        button.parentElement.remove();
+    }
+
+    function removeProjectItem(button) {
+        button.parentElement.remove();
+    }
+
+    function removeWorkExperienceItem(button) {
+        button.parentElement.remove();
+    }
+
+    function removeReferenceItem(button) {
+        button.parentElement.remove();
+    }
+
+    /*]]>*/
+</script>
+</body>
+</html>
