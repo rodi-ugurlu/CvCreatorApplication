@@ -113,11 +113,10 @@
                 .catch(error => console.error("Hata:", error));
         }
     }
-    // CV Listesini Sunucudan Çek ve Kartlarla Listele (Bootstrap kart yapısı)
     function loadCvList() {
-        fetch("getcvlist", { // Parametresiz
+        fetch("getcvlist", {
             method: 'GET',
-            credentials: 'include' // Cookie'leri gönder
+            credentials: 'include'
         })
             .then(response => response.json())
             .then(data => {

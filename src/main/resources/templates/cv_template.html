@@ -162,13 +162,13 @@
     <div class="two-columns">
         <div class="column">
             <div class="section">
-                <div class="section-title">Hakkımda</div>
+                <div class="section-title">About</div>
                 <div th:text="*{about}" style="color: #636e72;"></div>
             </div>
         </div>
         <div class="column">
             <div class="section">
-                <div class="section-title">Yetenekler</div>
+                <div class="section-title">Skills</div>
                 <div style="color: #636e72;" th:text="*{skill}"></div>
             </div>
         </div>
@@ -176,7 +176,7 @@
 
     <!-- Projects -->
     <div class="section">
-        <div class="section-title">Projeler</div>
+        <div class="section-title">Projects</div>
         <div th:each="project : *{projects}" class="content-item">
             <div class="company" th:text="${project.name}"></div>
             <div style="color: #2d3436;" th:text="${project.description}"></div>
@@ -189,7 +189,7 @@
     <div class="two-columns">
         <div class="column">
             <div class="section">
-                <div class="section-title">Eğitim</div>
+                <div class="section-title">Education</div>
                 <div th:each="education : *{educations}" class="content-item">
                     <div class="company" th:text="${education.university}"></div>
                     <div th:text="${education.department}" style="color: #2d3436;"></div>
@@ -199,7 +199,7 @@
         </div>
         <div class="column">
             <div class="section">
-                <div class="section-title">Deneyim</div>
+                <div class="section-title">Work Experience</div>
                 <div th:each="experience : *{workExperiences}" class="content-item">
                     <div class="company" th:text="${experience.company}"></div>
                     <div th:text="${experience.position}" style="color: #2d3436;"></div>
@@ -211,7 +211,7 @@
 
     <!-- References -->
     <div class="section">
-        <div class="section-title">Referanslar</div>
+        <div class="section-title">References</div>
         <div class="two-columns">
             <div th:each="reference : *{references}" class="content-item">
                 <div class="company" th:text="${reference.fullName}"></div>

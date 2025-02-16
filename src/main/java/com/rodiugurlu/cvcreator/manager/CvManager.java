@@ -11,7 +11,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.Base64;
@@ -46,7 +45,8 @@ public class CvManager implements CvService {
     public Cv createCv(Cv cv) {
         if (cv.getPhoto() != null) {
             // Fotoğrafı base64'e çevirin ve saklayın
-            cv.setPhoto(Base64.getEncoder().encodeToString(cv.getPhoto().getBytes()));
+//            cv.setPhoto(Base64.getEncoder().encodeToString(cv.getPhoto().getBytes()));
+            cv.setPhoto(cv.getPhoto());
         }
         String username = getCurrentUsername();
         User user = userRepository.findByUsername(username)
@@ -87,15 +87,13 @@ public class CvManager implements CvService {
     @Override
     @Transactional
     public void deleteCv(int id) {
-        Cv cv = cvRepository.findById(id).get();
-        cv.getEducations().clear();
-        cv.getProjects().clear();
-        cv.getWorkExperiences().clear();
-        cv.getReferences().clear();
-        cvRepository.deleteById(id);
-        entityManager.remove(cv);
+        Cv cv = cvRepository.findById(id).orElseThrow();
+        educationRepository.deleteByCvId(cv.getId());
+        workExperienceRepository.deleteByCvId(cv.getId());
+        projectRepository.deleteByCvId(cv.getId());
+        referenceRepository.deleteByCvId(cv.getId());
         cvRepository.deleteCvById(cv.getId());
-        entityManager.flush();
+
     }
 
 
