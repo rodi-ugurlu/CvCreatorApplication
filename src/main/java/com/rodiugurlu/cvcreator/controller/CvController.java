@@ -12,10 +12,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -26,6 +30,7 @@ public class CvController {
     private final CvService cvService;
     private final PdfService pdfService;
     private final PdfGeneratorService pdfGeneratorService;
+
 
     @PostMapping("/createcv")
     public ResponseEntity<Cv> createCv(@RequestBody Cv cv) {
@@ -79,4 +84,13 @@ public class CvController {
 
         return ResponseEntity.ok(cvList);
     }
+
+    @GetMapping("/getuserinfo")
+    @ResponseBody
+    public Map<String, String> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
+        Map<String, String> response = new HashMap<>();
+        response.put("username", userDetails.getUsername());
+        return response;
+    }
+
 }

@@ -6,6 +6,8 @@ import com.rodiugurlu.cvcreator.repository.UserRepository;
 import com.rodiugurlu.cvcreator.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -46,5 +48,23 @@ public class UserManager implements UserService {
     // Kullanıcı adının zaten alınıp alınmadığını kontrol et
     public boolean isUsernameTaken(String username) {
         return userRepository.findByUsername(username).isPresent();
+    }
+
+    @Override
+    public ResponseEntity<String> updatePassword(String currentPassword, String newPassword) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Optional<User> optional = userRepository.findByUsername(username);
+        if (optional.isPresent()) {
+            User user = optional.get();
+            if (passwordEncoder.matches(currentPassword, user.getPassword())) {
+                user.setPassword(passwordEncoder.encode(newPassword));
+                userRepository.save(user);
+            } else {
+                ResponseEntity.badRequest().body("Mevcut şifre yanlış.");
+
+            }
+
+        }
+        return ResponseEntity.badRequest().body("BIR HATA OLUSTU");
     }
 }

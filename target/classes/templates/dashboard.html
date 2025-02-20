@@ -69,15 +69,79 @@
 
     // Profil Görüntüleme
     function showProfile() {
-        document.getElementById("contentArea").innerHTML = `
-          <h2>Profilim</h2>
-          <p>Ad: Ahmet Yılmaz</p>
-          <p>Email: ahmet.yilmaz@example.com</p>
-          <p>Telefon: +90 555 123 4567</p>
-          <p>Konum: İstanbul, Türkiye</p>
-          <p>LinkedIn: <a href="#">linkedin.com/in/ahmetyilmaz</a></p>
-          <p>GitHub: <a href="#">github.com/ahmetyilmaz</a></p>
-      `;
+        fetch('getuserinfo')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("contentArea").innerHTML = `
+                <h2>Profilim</h2>
+                <p>Kullanıcı Adı: ${data.username}</p>
+                <button class="btn btn-warning mt-3" onclick="showPasswordUpdateForm()">Şifremi Güncelle</button>
+            `;
+            })
+            .catch(error => {
+                console.error("Profil bilgileri yüklenirken hata:", error);
+                document.getElementById("contentArea").innerHTML = `<p class="text-danger">Profil bilgileri yüklenirken hata oluştu.</p>`;
+            });
+    }
+    function showPasswordUpdateForm() {
+        document.getElementById("contentArea").innerHTML += `
+        <div class="mt-4">
+            <h3>Şifremi Güncelle</h3>
+            <form id="passwordUpdateForm">
+                <div class="mb-3">
+                    <label class="form-label">Mevcut Şifre</label>
+                    <input type="password" class="form-control" id="currentPassword" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Yeni Şifre</label>
+                    <input type="password" class="form-control" id="newPassword" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Yeni Şifre (Tekrar)</label>
+                    <input type="password" class="form-control" id="newPasswordConfirm" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Güncelle</button>
+                <button type="button" class="btn btn-secondary" onclick="showProfile()">İptal</button>
+            </form>
+        </div>
+    `;
+
+        // Form submit işlemi
+        document.getElementById("passwordUpdateForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const currentPassword = document.getElementById("currentPassword").value;
+            const newPassword = document.getElementById("newPassword").value;
+            const newPasswordConfirm = document.getElementById("newPasswordConfirm").value;
+
+            if (newPassword !== newPasswordConfirm) {
+                alert("Yeni şifreler eşleşmiyor.");
+                return;
+            }
+
+            const passwordData = {
+                currentPassword: currentPassword,
+                newPassword: newPassword
+            };
+
+            fetch("updatepassword", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(passwordData)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Şifre başarıyla güncellendi.");
+                        showProfile(); // Profil sayfasına geri dön
+                    } else {
+                        response.text().then(message => alert(message));
+                    }
+                })
+                .catch(error => {
+                    console.error("Hata:", error);
+                    alert("Şifre güncelleme sırasında bir hata oluştu.");
+                });
+        });
     }
 
     // CV Sayfasını Gösterme
@@ -113,11 +177,10 @@
                 .catch(error => console.error("Hata:", error));
         }
     }
-    // CV Listesini Sunucudan Çek ve Kartlarla Listele (Bootstrap kart yapısı)
     function loadCvList() {
-        fetch("getcvlist", { // Parametresiz
+        fetch("getcvlist", {
             method: 'GET',
-            credentials: 'include' // Cookie'leri gönder
+            credentials: 'include'
         })
             .then(response => response.json())
             .then(data => {
